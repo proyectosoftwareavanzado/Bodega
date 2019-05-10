@@ -60,6 +60,7 @@ async function obtenerInventario(req,res){
         if (error) 
         {
             console.log(error);
+            res.setHeader('Access-Control-Allow-Origin', '*');
             res.jsonp({error: 'Error de conexión a la base de datos.'})
         }
 
@@ -88,6 +89,7 @@ async function obtenerInventario(req,res){
 
         console.log(cad);
 
+        res.setHeader('Access-Control-Allow-Origin', '*');
         res.jsonp(JSON.parse(cad));
 
 
@@ -130,6 +132,7 @@ async function despacharOrden(req,res){
                 if (error) 
                 {
                     console.log(error);
+                    res.setHeader('Access-Control-Allow-Origin', '*');
                     res.jsonp({error: 'Error al actualizar la cantidad del producto'})
                 }
 
@@ -142,6 +145,7 @@ async function despacharOrden(req,res){
                 if (error) 
                 {
                     console.log(error);
+                    res.setHeader('Access-Control-Allow-Origin', '*');
                     res.jsonp({error: 'Error al guardar la orden aceptada'})
                 }
 
@@ -159,6 +163,7 @@ async function despacharOrden(req,res){
                 if (error) 
                 {
                     console.log(error);
+                    res.setHeader('Access-Control-Allow-Origin', '*');
                     res.jsonp({error: 'Error al guardar la orden rechazada'})
                 }
 
@@ -169,9 +174,9 @@ async function despacharOrden(req,res){
         }
 
         var cad = "{\"resultado\":"+bool+"}"
+
+        res.setHeader('Access-Control-Allow-Origin', '*');
         res.jsonp(JSON.parse(cad));
-
-
     });
 
 }
