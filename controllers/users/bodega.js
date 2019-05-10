@@ -183,7 +183,107 @@ async function despacharOrden(req,res){
 
 
 
+async function getInventarioReal(req,res){
+    
+    var sku = req.query.SKU;
+
+    var query = "SELECT cantidad from producto WHERE SKU = '"+sku+"' ;";
+
+    await conn.query(query, function (error, results, fields) {
+        
+        if (error)
+        {
+            console.log(error);
+            res.jsonp({error: 'Error de conexión a la base de datos.'})
+        }
+
+
+        var cad = "{\"Result\":[{\"SKU\":"+sku+",\"cantidad\":"+results[0].cantidad+"}]}"
+
+        res.setHeader('Access-Control-Allow-Origin', '*');
+        res.jsonp(JSON.parse(cad));
+    });
+
+}
+
+
+async function getTiempoEntrega(req,res){
+    
+    
+    var id_orden = req.query.ID_Orden;
+
+    var dias = 0;
+
+    var queryDias = "SELECT * from countries WHERE  countryName = (SELECT pais FROM orden WHERE idorden = '"+id_orden+"') OR  countryName = (select pais from localizacion);";
+
+    console.log(queryDias);
+
+    await conn.query(queryDias, function (error, results, fields) {            
+        
+        if (error) 
+        {
+            console.log(error);
+            res.setHeader('Access-Control-Allow-Origin', '*');
+            res.jsonp({error: 'Error de conexión a la base de datos.'})
+        }
+
+        console.log(results);
+
+        if(results.length > 1){
+
+            if(results[0].continentName == results[1].continentName){
+                dias = 3;
+            }else{
+                dias = 5;
+            }
+
+        }else{
+            dias = 1;
+        }  
+        
+        var cad = "{\"Result\":[{\"ID_Orden\":"+id_orden+",\"dias\":"+dias+"}]}"
+
+        res.setHeader('Access-Control-Allow-Origin', '*');
+        res.jsonp(JSON.parse(cad));
+
+
+    });
+
+}
+
+
+
+async function suscripcionTienda(req,res){
+    
+    var id_orden = req.query.ID_Tienda;
+
+    var dias = 0;
+
+    var queryDias = "INSERT INTO tienda (idtienda) VALUES ('"+id_orden+"')";
+
+    console.log(queryDias);
+
+    await conn.query(queryDias, function (error, results, fields) {            
+        
+        if (error) 
+        {
+            console.log(error);
+            res.setHeader('Access-Control-Allow-Origin', '*');
+            res.jsonp({error: 'Error de conexión a la base de datos.'})
+        }
+
+        var cad = "{\"Result\":[{\"ID_Tienda\":"+id_orden+",\"EstadoTransaccion\":"+true+"}]}"
+        res.setHeader('Access-Control-Allow-Origin', '*');
+        res.jsonp(JSON.parse(cad));
+
+    });
+
+}
+
 module.exports = {
     obtenerInventario,
-    despacharOrden
+    despacharOrden,
+    getInventarioReal,
+    getTiempoEntrega,
+    suscripcionTienda
 }
