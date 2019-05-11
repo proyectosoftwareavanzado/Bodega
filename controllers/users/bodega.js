@@ -299,7 +299,7 @@ async function catalogoPIM(req,res){
     res.setHeader('Access-Control-Allow-Origin', '*');    
 
     var options = {
-        url : 'http://35.231.130.137:80/PIM/obtenerCatalogo',
+        url : 'http://35.231.130.137:8081/PIM/obtenerCatalogo',
         method: 'GET',
         json: true,
         body: {}
