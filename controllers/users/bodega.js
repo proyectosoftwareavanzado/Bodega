@@ -196,7 +196,7 @@ async function getInventarioReal(req,res){
             res.jsonp({error: 'Error de conexión a la base de datos.'})
         }
 
-        var cad = "{\"Result\":[{\"SKU\":"+sku+",\"cantidad\":"+results[0].cantidad+"}]}"
+        var cad = "{\"Result\":[{\"SKU\":\""+sku+"\",\"cantidad\":"+results[0].cantidad+"}]}"
 
         res.setHeader('Access-Control-Allow-Origin', '*');
         res.jsonp(JSON.parse(cad));
