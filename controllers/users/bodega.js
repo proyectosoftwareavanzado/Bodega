@@ -337,8 +337,14 @@ async function catalogoPIM(req,res){
                                 cantidad = 0;
                                 inactivos++;                    
                         }
+                        
+                        var act = "0"
 
-                        var sql = "INSERT INTO producto (SKU,cantidad,activo) VALUES ('"+element.sku+"','"+cantidad+"','"+element.activo+"');";
+                        if(element.activo.toString()=="true"){
+                            act = "1";
+                        }
+
+                        var sql = "INSERT INTO producto (SKU,cantidad,activo) VALUES ('"+element.sku+"','"+cantidad+"','"+act+"');";
                         console.log(sql);
 
                         conn.query(sql, function (error, results, fields) {            
