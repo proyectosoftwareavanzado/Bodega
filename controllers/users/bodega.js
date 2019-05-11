@@ -1,6 +1,8 @@
 'use strict'
 
 const conn = require('../connect').connection;
+const authCon = require('../connect').authConn;
+const conf = require('../conf').config;
 const Request = require("request");
 
 async function obtenerInventario(req,res){        
@@ -96,7 +98,6 @@ async function obtenerInventario(req,res){
     });
 }
 
-
 async function despacharOrden(req,res){   
 
     var sku = req.body.sku;
@@ -181,8 +182,6 @@ async function despacharOrden(req,res){
 
 }
 
-
-
 async function getInventarioReal(req,res){
     
     var sku = req.body.SKU;
@@ -204,7 +203,6 @@ async function getInventarioReal(req,res){
     });
 
 }
-
 
 async function getTiempoEntrega(req,res){
     
@@ -250,8 +248,6 @@ async function getTiempoEntrega(req,res){
 
 }
 
-
-
 async function suscripcionTienda(req,res){
     
     var id_orden = req.body.ID_Tienda;
@@ -280,10 +276,9 @@ async function suscripcionTienda(req,res){
 
 /******************************** */
 let jsonProductos;
-
 async function catalogoPIM(req,res){
 
-    await conn.query("DELETE FROM producto;", function (error, results, fields) {            
+    await conn.query("DELETE FROM producto;", async function (error, results, fields) {            
         
         if (error) 
         {
@@ -296,69 +291,83 @@ async function catalogoPIM(req,res){
 
     });
 
-    res.setHeader('Access-Control-Allow-Origin', '*');    
-
-    var options = {
-        url : 'http://35.231.130.137:8081/PIM/obtenerCatalogo',
-        method: 'GET',
+    Request.post({
+        url: 'http://35.231.130.137:8086/getToken',
         json: true,
-        body: {}
-    }
- 
-    await Request.get(options, (error, response, body) => {
+        body: {
+            "client_id": conf.client_id,
+            "client_secret": conf.client_secret
+        },
+    },async function (err, resp, body2) {
+        var j = JSON.parse(JSON.stringify(body2));
+    
+        res.setHeader('Access-Control-Allow-Origin', '*');    
+
+        var options = {
+            url : 'http://35.231.130.137:8081/PIM/obtenerCatalogo',
+            method: 'GET',
+            json: true,
+            body: {},
+            headers: {
+                'scope': 'obtenerCatalogo',
+                'authorization': j.access_token
+            }
+        }
+    
+            await Request.get(options, (error, response, body) => {
+                        
+                try {
+
+                    var productos = body.productos;
+                    
+                    var cantidad = productos.length;
+                    var inactividad = Math.ceil(productos.length*0.2);
+                    var inactivos = 0;
+                    var counter = 0;
+
+                    console.log("hay "+cantidad);
+                    console.log("deberian inactivarse "+inactividad);
+
+
+                    productos.forEach(element => {
+
+                        var cantidad = Math.floor(Math.random() * 200);   
+                        
+                        if(inactivos < inactividad && counter%2 == 0){                    
+                                cantidad = 0;
+                                inactivos++;                    
+                        }
+
+                        var sql = "INSERT INTO producto (SKU,cantidad,activo) VALUES ('"+element.sku+"','"+cantidad+"','"+element.activo+"');";
+                        console.log(sql);
+
+                        conn.query(sql, function (error, results, fields) {            
                 
-        try {
+                            if (error) 
+                            {
+                                console.log(error);
+                                res.setHeader('Access-Control-Allow-Origin', '*');
+                                res.jsonp({error: 'Error de conexión a la base de datos.'})
+                            }
 
-            var productos = body.productos;
-            
-            var cantidad = productos.length;
-            var inactividad = Math.ceil(productos.length*0.2);
-            var inactivos = 0;
-            var counter = 0;
+                            console.log("Producto registrado exitosamente en la bodega");
 
-            console.log("hay "+cantidad);
-            console.log("deberian inactivarse "+inactividad);
+                        });
 
+                        counter++;
+                    });
+                    
+                    var cad = "{\"resultado\":\"correcto\"}"
+                    res.setHeader('Access-Control-Allow-Origin', '*');
+                    res.jsonp(JSON.parse(cad));
 
-            productos.forEach(element => {
-
-                var cantidad = Math.floor(Math.random() * 200);   
-                
-                if(inactivos < inactividad && counter%2 == 0){                    
-                        cantidad = 0;
-                        inactivos++;                    
+                }catch(e){
+                    console.log(e);
+                    console.log("Hubo un error con el PIM");
                 }
 
-                var sql = "INSERT INTO producto (SKU,cantidad,activo) VALUES ('"+element.sku+"','"+cantidad+"','"+element.activo+"');";
-                console.log(sql);
-
-                conn.query(sql, function (error, results, fields) {            
-        
-                    if (error) 
-                    {
-                        console.log(error);
-                        res.setHeader('Access-Control-Allow-Origin', '*');
-                        res.jsonp({error: 'Error de conexión a la base de datos.'})
-                    }
-
-                    console.log("Producto registrado exitosamente en la bodega");
-
-                });
-
-                counter++;
-            });
-            
-            var cad = "{\"resultado\":\"correcto\"}"
-            res.setHeader('Access-Control-Allow-Origin', '*');
-            res.jsonp(JSON.parse(cad));
-
-        }catch(e){
-            console.log(e);
-            console.log("Hubo un error con el PIM");
-        }
-
-    });   
-
+        });   
+    });
 }
 
 

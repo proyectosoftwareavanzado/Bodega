@@ -9,6 +9,14 @@ var connection = mysql.createConnection({
     database : 'bodega'
 });
 
+var authConn = mysql.createConnection({
+    host     : '35.225.155.247',
+    user     : 'root',
+    password : '123',
+    database : 'auth'
+});
+
 module.exports = {
-    connection
+    connection,
+    authConn
 }
