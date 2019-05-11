@@ -304,7 +304,7 @@ async function catalogoPIM(req,res){
         res.setHeader('Access-Control-Allow-Origin', '*');    
 
         var options = {
-            url : 'http://35.231.130.137:8081/PIM/obtenerCatalogo',
+            url : 'http://america.esb5.softwareavanzado.world:8081/PIM/obtenerCatalogo',
             method: 'GET',
             json: true,
             body: {},
