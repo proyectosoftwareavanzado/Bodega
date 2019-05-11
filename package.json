@@ -15,7 +15,8 @@
     "express-handlebars": "^3.0.0",
     "express-session": "^1.15.6",
     "mysql": "github:mysqljs/mysql",
-    "node-cron": "^2.0.3"
+    "node-cron": "^2.0.3",
+    "request": "^2.88.0"
   },
   "devDependencies": {
     "nodemon": "^1.19.0"

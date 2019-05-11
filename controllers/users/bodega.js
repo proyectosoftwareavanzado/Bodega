@@ -1,13 +1,13 @@
 'use strict'
 
 const conn = require('../connect').connection;
+const Request = require("request");
 
-async function obtenerInventario(req,res){    
-    
-    var skus = JSON.parse(req.query.arreglo); 
-    var pais = req.query.pais;
-    var destino = req.query.destino;
-    var origen = req.query.origen;
+async function obtenerInventario(req,res){        
+
+    var skus = req.body.arreglo; 
+    var destino = req.body.destino;
+    var origen = req.body.origen;
 
     var query = "SELECT SKU as sku , cantidad as inventario from producto WHERE ";
     //var query = "SELECT SKU as sku , cantidad as inventario , 0 as tiempo from producto WHERE ";
@@ -97,12 +97,12 @@ async function obtenerInventario(req,res){
 }
 
 
-async function despacharOrden(req,res){
-    
-    var sku = req.query.sku;
-    var cantidad = req.query.cantidad;
-    var direccion = req.query.direccion;
-    var pais = req.query.pais
+async function despacharOrden(req,res){   
+
+    var sku = req.body.sku;
+    var cantidad = req.body.cantidad;
+    var direccion = req.body.direccion;
+    var pais = req.body.pais
 
     var query = "SELECT cantidad from producto WHERE SKU = '"+sku+"' ;";
 
@@ -185,7 +185,7 @@ async function despacharOrden(req,res){
 
 async function getInventarioReal(req,res){
     
-    var sku = req.query.SKU;
+    var sku = req.body.SKU;
 
     var query = "SELECT cantidad from producto WHERE SKU = '"+sku+"' ;";
 
@@ -196,7 +196,6 @@ async function getInventarioReal(req,res){
             console.log(error);
             res.jsonp({error: 'Error de conexión a la base de datos.'})
         }
-
 
         var cad = "{\"Result\":[{\"SKU\":"+sku+",\"cantidad\":"+results[0].cantidad+"}]}"
 
@@ -210,7 +209,7 @@ async function getInventarioReal(req,res){
 async function getTiempoEntrega(req,res){
     
     
-    var id_orden = req.query.ID_Orden;
+    var id_orden = req.body.ID_Orden;
 
     var dias = 0;
 
@@ -255,7 +254,7 @@ async function getTiempoEntrega(req,res){
 
 async function suscripcionTienda(req,res){
     
-    var id_orden = req.query.ID_Tienda;
+    var id_orden = req.body.ID_Tienda;
 
     var dias = 0;
 
@@ -277,13 +276,97 @@ async function suscripcionTienda(req,res){
         res.jsonp(JSON.parse(cad));
 
     });
+}
+
+/******************************** */
+let jsonProductos;
+
+async function catalogoPIM(req,res){
+
+    await conn.query("DELETE FROM producto;", function (error, results, fields) {            
+        
+        if (error) 
+        {
+            console.log(error);
+            res.setHeader('Access-Control-Allow-Origin', '*');
+            res.jsonp({error: 'Error de conexión a la base de datos.'})
+        }
+        
+        console.log("Se limpiaron los productos");
+
+    });
+
+    res.setHeader('Access-Control-Allow-Origin', '*');    
+
+    var options = {
+        url : 'http://localhost:8002/users',
+        method: 'GET',
+        json: true,
+        body: {}
+    }
+ 
+    await Request.get(options, (error, response, body) => {
+                
+        try {
+
+            var productos = body.productos;
+            
+            var cantidad = productos.length;
+            var inactividad = Math.ceil(productos.length*0.2);
+            var inactivos = 0;
+            var counter = 0;
+
+            console.log("hay "+cantidad);
+            console.log("deberian inactivarse "+inactividad);
+
+
+            productos.forEach(element => {
+
+                var cantidad = Math.floor(Math.random() * 200);   
+                
+                if(inactivos < inactividad && counter%2 == 0){                    
+                        cantidad = 0;
+                        inactivos++;                    
+                }
+
+                var sql = "INSERT INTO producto (SKU,cantidad,activo) VALUES ('"+element.sku+"','"+cantidad+"','"+element.activo+"');";
+                console.log(sql);
+
+                conn.query(sql, function (error, results, fields) {            
+        
+                    if (error) 
+                    {
+                        console.log(error);
+                        res.setHeader('Access-Control-Allow-Origin', '*');
+                        res.jsonp({error: 'Error de conexión a la base de datos.'})
+                    }
+
+                    console.log("Producto registrado exitosamente en la bodega");
+
+                });
+
+                counter++;
+            });
+            
+            var cad = "{\"resultado\":\"correcto\"}"
+            res.setHeader('Access-Control-Allow-Origin', '*');
+            res.jsonp(JSON.parse(cad));
+
+        }catch(e){
+            console.log(e);
+            console.log("Hubo un error con el PIM");
+        }
+
+    });   
 
 }
+
 
 module.exports = {
     obtenerInventario,
     despacharOrden,
     getInventarioReal,
     getTiempoEntrega,
-    suscripcionTienda
+    suscripcionTienda,
+    catalogoPIM
 }
